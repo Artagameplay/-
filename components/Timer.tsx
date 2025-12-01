@@ -1,0 +1,84 @@
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, RotateCcw, Bell } from 'lucide-react';
+import { toPersianDigits } from '../services/dateUtils';
+
+const Timer: React.FC = () => {
+  const [minutes, setMinutes] = useState(25);
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [isActive, setIsActive] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
+
+  useEffect(() => {
+    let interval: any = null;
+    if (isActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(timeLeft - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
+      setIsFinished(true);
+      const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+      audio.play().catch(e => console.log("Audio play failed interaction required"));
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft]);
+
+  const toggleTimer = () => setIsActive(!isActive);
+  
+  const resetTimer = () => {
+    setIsActive(false);
+    setTimeLeft(minutes * 60);
+    setIsFinished(false);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${toPersianDigits(mins.toString().padStart(2, '0'))}:${toPersianDigits(secs.toString().padStart(2, '0'))}`;
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center w-full max-w-sm mx-auto border-2 border-indigo-100 dark:border-slate-700 transition-colors">
+      <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-300 mb-4 flex items-center gap-2">
+        <Bell className="w-5 h-5 text-indigo-500" />
+        تایمر مطالعه
+      </h3>
+      
+      {/* Time Display */}
+      <div className={`text-6xl font-bold mb-6 font-mono tracking-wider ${isFinished ? 'text-green-500 animate-pulse' : 'text-gray-700 dark:text-white'}`}>
+        {formatTime(timeLeft)}
+      </div>
+
+      {/* Controls */}
+      <div className="flex gap-4 mb-6">
+        <button 
+          onClick={toggleTimer}
+          className={`p-4 rounded-full transition-all ${isActive ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-800' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg'}`}
+        >
+          {isActive ? <Pause size={28} /> : <Play size={28} fill="currentColor" />}
+        </button>
+        <button 
+          onClick={resetTimer}
+          className="p-4 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
+        >
+          <RotateCcw size={28} />
+        </button>
+      </div>
+
+      {/* Presets */}
+      <div className="grid grid-cols-3 gap-2 w-full">
+        {[15, 25, 45].map((m) => (
+          <button
+            key={m}
+            onClick={() => { setMinutes(m); setTimeLeft(m * 60); setIsActive(false); setIsFinished(false); }}
+            className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${minutes === m ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200' : 'bg-gray-50 dark:bg-slate-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-600'}`}
+          >
+            {toPersianDigits(m)} دقیقه
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Timer;
