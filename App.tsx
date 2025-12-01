@@ -21,14 +21,35 @@ const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
+    // 1. Initialize Users (ensure admin exists)
     initUsers();
+    
+    // 2. Check for logged in user
     const currentUser = getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
     }
+    
+    // 3. Load Tasks
     const loaded = getTasks();
     setTasks(loaded);
+
+    // 4. Load Theme Preference
+    const savedTheme = localStorage.getItem('darsyar_theme');
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+    }
   }, []);
+
+  useEffect(() => {
+    // Persist Theme
+    localStorage.setItem('darsyar_theme', isDarkMode ? 'dark' : 'light');
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -64,8 +85,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`${isDarkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-500 flex font-[Vazirmatn]">
+    <div className={`min-h-screen bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-500 flex font-[Vazirmatn] ${isDarkMode ? 'dark' : ''}`}>
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <div 
@@ -76,18 +96,18 @@ const App: React.FC = () => {
 
         {/* Sidebar - Hidden on Print */}
         <aside className={`
-          fixed lg:sticky top-0 right-0 h-screen w-72 bg-white dark:bg-slate-800 shadow-2xl lg:shadow-none z-50 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] border-l border-gray-100 dark:border-slate-700 print:hidden
+          fixed lg:sticky top-0 right-0 h-screen w-72 bg-white dark:bg-slate-800 shadow-2xl lg:shadow-none z-50 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] border-l border-gray-100 dark:border-slate-700 print:hidden flex flex-col
           ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
         `}>
-          <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center gap-3 mb-8">
+          <div className="p-6 flex flex-col h-full overflow-y-auto custom-scrollbar">
+            <div className="flex items-center gap-3 mb-8 shrink-0">
               <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 dark:shadow-none animate-in spin-in-90 duration-700">
                 <GraduationCap size={24} />
               </div>
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">درس‌یار</h1>
             </div>
 
-            <nav className="space-y-2 flex-1">
+            <nav className="space-y-2 mb-6">
               <NavItem id="dashboard" icon={LayoutDashboard} label="داشبورد" />
               <NavItem id="tasks" icon={CheckSquare} label="کارها و تکالیف" />
               <NavItem id="tutor" icon={UserIcon} label="معلم خصوصی" />
@@ -104,21 +124,28 @@ const App: React.FC = () => {
               )}
             </nav>
 
-            <button onClick={handleLogout} className="mt-4 flex items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-3 rounded-xl transition-colors">
-              <LogOut size={20} />
-              خروج از حساب
-            </button>
+            <div className="mt-auto space-y-4">
+              {/* Timer in Sidebar - Always Persistent */}
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                 <Timer />
+              </div>
+
+              <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-3 rounded-xl transition-colors font-medium">
+                <LogOut size={20} />
+                خروج از حساب
+              </button>
+            </div>
           </div>
 
           {/* User Profile Mini */}
-          <div className="absolute bottom-0 w-full p-6 border-t border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+          <div className="shrink-0 p-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-800">
                   {user.fullName.charAt(0)}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate w-32">{user.fullName}</p>
+                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate w-28">{user.fullName}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{user.role === 'ADMIN' ? 'مدیر سیستم' : 'دانش‌آموز'}</p>
                 </div>
               </div>
@@ -147,6 +174,9 @@ const App: React.FC = () => {
                <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-yellow-400">
                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                </button>
+               <button onClick={handleLogout} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 text-red-500">
+                 <LogOut size={20} />
+               </button>
                <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-white">
                  <Menu />
                </button>
@@ -163,7 +193,7 @@ const App: React.FC = () => {
                   </div>
                 </header>
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* Stats Cards */}
                   <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl shadow-indigo-200 dark:shadow-none transform transition-all hover:scale-[1.02]">
                     <div className="flex justify-between items-start mb-4">
@@ -183,12 +213,8 @@ const App: React.FC = () => {
                     <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">ایول، خسته نباشی! 👏</p>
                   </div>
 
-                  <div className="md:row-span-2">
-                    <Timer />
-                  </div>
-
-                  {/* Quick Tasks */}
-                  <div className="md:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-sm">
+                  {/* Quick Tasks - Spanning 2 cols on MD, 1 on LG or flexible */}
+                  <div className="md:col-span-2 lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-sm">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-bold text-lg text-gray-800 dark:text-white">لیست کارهای امروز</h3>
                       <button onClick={() => setView('tasks')} className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline">مشاهده همه</button>
@@ -214,7 +240,6 @@ const App: React.FC = () => {
             {view === 'admin' && user.role === 'ADMIN' && <AdminPanel />}
           </div>
         </main>
-      </div>
     </div>
   );
 };

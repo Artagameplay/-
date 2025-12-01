@@ -31,21 +31,24 @@ const DEFAULT_ADMIN: User = {
 
 // Initialize Admin if not exists
 export const initUsers = () => {
-  const users = getUsers();
+  let users = getUsers();
+  // Ensure Admin exists
   if (!users.find(u => u.username === DEFAULT_ADMIN.username)) {
-    users.push(DEFAULT_ADMIN);
-    // Add default Arta user if strictly needed, otherwise admin creates it
-    if (!users.find(u => u.username === 'arta')) {
-        users.push({
-            id: 'arta_default',
-            username: 'arta',
-            password: '123',
-            fullName: 'آرتا کلبادی نژاد',
-            role: 'STUDENT',
-            hasSubscription: true
-        });
-    }
+    users = [...users, DEFAULT_ADMIN];
     saveUsers(users);
+  }
+  
+  // Ensure Arta exists (optional, mostly for demo if not created via admin)
+  if (!users.find(u => u.username === 'arta')) {
+      users.push({
+          id: 'arta_default',
+          username: 'arta',
+          password: '123',
+          fullName: 'آرتا کلبادی نژاد',
+          role: 'STUDENT',
+          hasSubscription: true
+      });
+      saveUsers(users);
   }
 };
 
